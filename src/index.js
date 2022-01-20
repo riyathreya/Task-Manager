@@ -10,6 +10,16 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 
+//middleware for parsing JSON
+app.use(express.json());
+app.use(userRouter);
+app.use(taskRouter)
+
+app.listen(port, () => {
+    console.log("server is up on port "+ port)
+}); 
+
+
 //without middleware --> new request --> handler 
 //with middleware --> new request --> do something --> go to handler or not based on next() call
 
@@ -32,15 +42,6 @@ const port = process.env.PORT || 3000;
 // })
 
 
-//middleware for parsing JSON
-app.use(express.json());
-app.use(userRouter);
-app.use(taskRouter)
-
-
-app.listen(port, () => {
-    console.log("server is up on port "+ port)
-});
 
 //BASIC BCRYPT FUNCTION FOR HASH, COMPARE 
 //const bcrypt = require('bcrypt');
@@ -77,3 +78,45 @@ app.listen(port, () => {
 
 // }
 // myFunction();
+
+
+//JSON.stingify and toJSON
+
+// if we call JSON.stringify on an object and that object already has a function toJSON defined on it,
+//then it implicity overwrites the JSON.stringify and toJSON function is executed
+//in example below, instead of printing the entire prt object in line 30, it will print only pet name because 
+//only pet name is returned in function toJSOn on line 28
+
+
+
+// const pet = {
+//     name: 'jimmy'
+// }
+
+// pet.toJSON = function(){
+//     return this.name
+// }
+
+
+// console.log(JSON.stringify(pet));
+
+
+const Task = require('./models/task')
+const User = require('./models/user')
+
+const main = async () => {
+    // const task = await Task.findById('61e80701f4ed444a9c894bd2');
+    // await task.populate('owner').execPopulate();
+    // console.log(task.owner) //this will print the entire user object instead of the user ID  stored in DB
+
+    const user = await  User.findById('61e806f8f4ed444a9c894bd0');
+    await user.populate('tasks').execPopulate();
+    console.log(user.tasks); 
+
+
+}
+
+main()
+
+
+

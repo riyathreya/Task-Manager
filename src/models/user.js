@@ -49,6 +49,14 @@ const userSchema = mongoose.Schema({
     }]
 });
 
+//defines virtual relation, this field is not stored in db document
+//just indicates that this new field tasks is related to the Task collection
+userSchema.virtual('tasks', {
+    ref: 'task',
+    localField: '_id',
+    foreignField: 'owner'
+})
+
 //mongoose middlewares can be applied on schema  => schemaName.pre , schemaName.post for before and after an event (here, save is the event)
 //don't use arrow functions as they cannot bind this, we need this to access the object being saved
 
@@ -68,11 +76,11 @@ userSchema.pre('save', async function(next){
 //defining the function on schemaname.statics allows you to use the function directly on the model
 
 
-//statics methods are accessible on model, aslso aclled model methods (called like User.findbyCredentials())
+//statics methods are accessible on model, aslso called model methods (called like User.findbyCredentials())
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email });
     if(!user){
-        throw new Error("Unable to login!")
+        throw new Error("Unable to find user!")
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if(!isMatch){
@@ -88,6 +96,13 @@ userSchema.methods.generateAuthToken = async function(){
 
     await this.save();
     return token;
+}
+
+userSchema.methods.toJSON = function(){
+    const userObject = this.toObject();
+    delete userObject.password;
+    delete userObject.tokens;
+    return userObject
 }
 
 //Create model
