@@ -6,9 +6,33 @@ require('./db/mongoose'); //by adding require, it ensures that  the file runs
 const userRouter = require('./routers/users')
 const taskRouter = require('./routers/tasks')
 
+
 const app = express();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
+
+// //multer library to upload
+const multer = require('multer');
+
+const upload = multer({ //new instance of multer specifying the dest where files get stored
+    dest: 'images',
+    limits:{
+        fileSize: 1000000
+    },
+    fileFilter(req, file, cb){
+        if(!file.originalname.match(/\.doc[x]{0,1}$/)){
+            return cb(new Error('file must be a word document'));
+        }
+        cb(undefined, true);
+        // cb(new Error('file must be a PDF')); //failure case callback
+        // cb(undefined, true); //upload file success type
+        // cb(undefined, false); //reject the upload , no error 
+    }
+});
+
+app.post('/upload', upload.single('upload'), async (req, res) => { //multer instance added as the middleware, multer looks for uploaded file by name upload
+    res.status(200).send();
+})
 
 //middleware for parsing JSON
 app.use(express.json());
@@ -101,22 +125,22 @@ app.listen(port, () => {
 // console.log(JSON.stringify(pet));
 
 
-const Task = require('./models/task')
-const User = require('./models/user')
+// const Task = require('./models/task')
+// const User = require('./models/user')
 
-const main = async () => {
-    // const task = await Task.findById('61e80701f4ed444a9c894bd2');
-    // await task.populate('owner').execPopulate();
-    // console.log(task.owner) //this will print the entire user object instead of the user ID  stored in DB
+// const main = async () => {
+//     // const task = await Task.findById('61e80701f4ed444a9c894bd2');
+//     // await task.populate('owner').execPopulate();
+//     // console.log(task.owner) //this will print the entire user object instead of the user ID  stored in DB
 
-    const user = await  User.findById('61e806f8f4ed444a9c894bd0');
-    await user.populate('tasks').execPopulate();
-    console.log(user.tasks); 
+//     const user = await  User.findById('61e990218adc3b7ac0937814');
+//     await user.populate('tasks').execPopulate();
+//     console.log(user.tasks); 
 
 
-}
+// }
 
-main()
+// main()
 
 
 

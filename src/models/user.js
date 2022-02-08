@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const Task = require('./task');
 
 const userSchema = mongoose.Schema({
     name: {
@@ -47,6 +48,8 @@ const userSchema = mongoose.Schema({
             required: true
         }
     }]
+}, {
+    timestamps: true
 });
 
 //defines virtual relation, this field is not stored in db document
@@ -72,6 +75,13 @@ userSchema.pre('save', async function(next){
     next(); // call next once this execution is complete 
 })
 
+//middleware that deletes tasks that belong to user when user is deleted
+userSchema.pre('remove', async function(next) {
+    const user = this;
+    await Task.deleteMany({ owner: user._id})
+    next();
+})
+
 //create a custom fuction on userschema 
 //defining the function on schemaname.statics allows you to use the function directly on the model
 
@@ -91,7 +101,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
 
 //methods on schema are accessible on instances, called instance methods (called like user.generateAuthToken()))
 userSchema.methods.generateAuthToken = async function(){
-    const token = jwt.sign({ _id: this._id.toString() }, 'thisismynewcourse'); //generating the token by using unique id and signing with a string
+    const token = jwt.sign({ _id: this._id.toString() }, process.env.JWT_SECRET); //generating the token by using unique id and signing with a string
     this.tokens = this.tokens.concat({ token })   //adding the new token to the token array for that user
 
     await this.save();

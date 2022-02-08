@@ -3,6 +3,21 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');  //model is required in the routers
 const auth = require('../middleware/auth');
+const {sendWelcomeEmail, sendGoodbyeEmail} = require('../emails/account')
+
+const multer = require('multer');
+const uploads = multer({
+    dest: 'avatars',
+    limits:{
+        fileSize: 1000000,
+    },
+    fileFilter(req, file, cb){
+        if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
+            return cb(new Error('file must be image type'));
+        }
+        cb(undefined, true);
+    }
+})
 
 //using async await
 
@@ -11,6 +26,8 @@ router.post('/users', async (req, res) => {
 
     try{
         await user.save();
+        //send mail on creation of user 
+        sendWelcomeEmail(user.email, user.name)
         const token = await user.generateAuthToken();
         res.status(201).send({ user, token }); 
     }catch(e){
@@ -110,6 +127,7 @@ router.delete('/users/me', auth, async (req, res) => {
         //     res.status(404).send();
         // }
         await req.user.remove();
+        sendGoodbyeEmail(req.user.email, req.user.name)
         res.status(200).send(req.user);
 
     }catch(e){
@@ -117,6 +135,21 @@ router.delete('/users/me', auth, async (req, res) => {
     }
 })
 
+
+
+router.post('/users/me/avatars', uploads.single('avatar'), async (req, res) => {
+ res.send();
+}, (error, req, res, next)  => {
+    return res.status(400).send(error)
+
+})
+
+
+/* trial route */
+
+router.get('/axios/test', (req, res) => {
+    res.send("axios worked")
+})
 
 
 
